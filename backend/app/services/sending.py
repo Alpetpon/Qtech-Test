@@ -146,6 +146,18 @@ def ready_at(session: Session, now: datetime) -> datetime:
     return max(moments)
 
 
+def sent_last_day(session: Session, now: datetime) -> int:
+    """Сколько мест суточного лимита занято: отправленные и, возможно, отправленные (unknown) за 24 часа."""
+    return session.scalar(
+        select(func.count())
+        .select_from(models.OutboxMessage)
+        .where(
+            models.OutboxMessage.status.in_(("sent", "unknown")),
+            models.OutboxMessage.sent_at > now - LIMIT_WINDOW,
+        )
+    )
+
+
 def current_pause(session: Session, now: datetime) -> models.SenderState | None:
     """Идущая пауза аккаунта: причина в pause_reason, сроки в paused_at и paused_until. None — паузы нет."""
     state = session.get(models.SenderState, ACCOUNT)
