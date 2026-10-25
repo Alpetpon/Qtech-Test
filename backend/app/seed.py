@@ -14,16 +14,16 @@ from app.config import settings
 from app.db import SessionLocal
 from app.models import Base, Chat, OurAccount, Supplier, SupplierContact, chat_suppliers
 
-log = logging.getLogger("app.seed")  # не __name__: при python -m app.seed он равен __main__
+log = logging.getLogger("app.seed")
 
 STATUSES = ("active", "new")
 
 
 def load(session: Session, *dirs: Path) -> None:
-    """Добавляет из папок с данными записи, которых ещё нет в базе.
+    """Добавляет из папок с данными записи, которых еще нет в базе.
 
-    Существующие записи не меняет: после загрузки их правят рассылка (last_outbound_at)
-    и «Применить» (прайс), и перезапуск сервиса не должен откатывать эти правки.
+    Существующие записи не меняет, после загрузки их правят рассылка (last_outbound_at)
+    и пользователь кнопкой «Применить», и перезапуск сервиса не должен откатывать эти правки.
     """
     for row in read(dirs, "suppliers.json"):
         with skip_broken(session, "suppliers.json", row):
