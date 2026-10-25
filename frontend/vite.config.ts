@@ -1,8 +1,10 @@
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 
-export default defineConfig({
-  plugins: [react()],
-  // npm run dev: запросы к API уходят в бэкенд из docker compose
-  server: { proxy: { "/api": "http://localhost:8000" } },
+export default defineConfig(({ mode }) => {
+  const { APP_PORT } = loadEnv(mode, "..", "APP_PORT");
+  return {
+    plugins: [react()],
+    server: { proxy: { "/api": `http://localhost:${APP_PORT || "8000"}` } },
+  };
 });
