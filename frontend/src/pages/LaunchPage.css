@@ -1,0 +1,95 @@
+.launch fieldset {
+  margin: 0 0 1rem;
+  border: 1px solid #8886;
+  border-radius: 6px;
+}
+
+.launch-choice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+}
+
+.launch-choice input {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+}
+
+.launch-template {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.launch-template textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.5rem;
+  font: inherit;
+  resize: vertical;
+}
+
+.launch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.launch-actions button,
+.launch-alert button {
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  font: inherit;
+}
+
+.launch-hint,
+.launch-muted,
+.launch small {
+  opacity: 0.7;
+}
+
+.launch-alert {
+  margin: 1rem 0;
+  padding: 0.5rem 1rem;
+  border: 1px solid #d33;
+  border-radius: 6px;
+  background: #d331;
+}
+
+.launch-alert ul {
+  margin: 0.25rem 0;
+  padding-left: 1.25rem;
+}
+
+.launch-preview {
+  margin-top: 1.5rem;
+}
+
+.launch-stale {
+  opacity: 0.55;
+}
+
+.launch-list {
+  padding: 0;
+  list-style: none;
+}
+
+.launch-list li {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #8884;
+  border-radius: 6px;
+}
+
+.launch-list pre {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem;
+  background: #8882;
+  font: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

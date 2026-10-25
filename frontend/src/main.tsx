@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Link, Outlet, Route, Routes } from "react-router";
 
 import { api } from "./api/client";
+import { LaunchPage } from "./pages/LaunchPage";
 import "./styles.css";
 
 function BackendStatus() {
@@ -48,7 +49,7 @@ createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
-          <Route index element={<h1>Рассылка поставщикам и разбор предложений</h1>} />
+          <Route index element={<LaunchPage />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
