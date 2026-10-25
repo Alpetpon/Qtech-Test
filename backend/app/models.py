@@ -104,3 +104,12 @@ class OutboxMessage(Base):
     text: Mapped[str]
     status: Mapped[str] = mapped_column(default="pending")
     sent_at: Mapped[datetime | None]
+
+
+class SenderState(Base):
+    """Аккаунт, с которого уходит очередь, и когда ему можно отправить следующее сообщение."""
+
+    __tablename__ = "sender_state"
+
+    account: Mapped[str] = mapped_column(primary_key=True)
+    next_send_at: Mapped[datetime | None]

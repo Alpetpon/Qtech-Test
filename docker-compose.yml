@@ -9,6 +9,17 @@ x-postgres-healthcheck: &postgres-healthcheck
   timeout: 3s
   retries: 15
 
+x-backend: &backend
+  build:
+    context: .
+    target: runtime
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    <<: *postgres-env
+    POSTGRES_HOST: db
+
 services:
   db:
     image: postgres:16-alpine
@@ -17,22 +28,28 @@ services:
       - pgdata:/var/lib/postgresql/data
     healthcheck: *postgres-healthcheck
 
-  app:
-    build:
-      context: .
-      target: runtime
-    env_file:
-      - path: .env
-        required: false
-    environment:
-      <<: *postgres-env
-      POSTGRES_HOST: db
-    command: sh -c "alembic upgrade head && python -m app.seed && uvicorn app.main:app --host 0.0.0.0 --port 8000"
-    ports:
-      - "8000:8000"
+  migrate:
+    <<: *backend
+    command: sh -c "alembic upgrade head && python -m app.seed"
     depends_on:
       db:
         condition: service_healthy
+
+  app:
+    <<: *backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    <<: *backend
+    command: python -m app.worker
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
 
   test-db:
     image: postgres:16-alpine
