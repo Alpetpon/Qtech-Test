@@ -125,7 +125,6 @@ def test_busy_chats_excluded_others_sent(session, clock):
     [
         ("pending", "уже в очереди рассылки №{}"),
         ("sending", "уже в очереди рассылки №{}"),
-        ("unknown", "неизвестно, ушло ли сообщение рассылки №{}, — проверьте чат"),
     ],
 )
 def test_unsent_message_keeps_chat_busy(session, clock, status, reason):
@@ -138,16 +137,21 @@ def test_unsent_message_keeps_chat_busy(session, clock, status, reason):
     assert reasons(preview(session, clock, TEMPLATE, preset="stale_price"))["s1"] == [reason.format(first.id)]
 
 
-def test_sent_message_keeps_chat_14_days(session, clock):
+@pytest.mark.parametrize(
+    ("status", "reason"),
+    [
+        ("sent", "уже писали в рассылке №{}"),
+        ("unknown", "неизвестно, ушло ли сообщение рассылки №{}, — проверьте чат"),
+    ],
+)
+def test_sent_message_keeps_chat_14_days(session, clock, status, reason):
     load(session, DATA)
     first = create(session, clock, TEMPLATE, preset="stale_price")
     # last_outbound_at чата не трогаем: очередь держит чат и без него
-    first.messages[0].status, first.messages[0].sent_at = "sent", NOW
+    first.messages[0].status, first.messages[0].sent_at = status, NOW
 
     clock.advance(timedelta(days=14, seconds=-1))
-    assert reasons(preview(session, clock, TEMPLATE, preset="stale_price"))["s1"] == [
-        f"уже писали в рассылке №{first.id}"
-    ]
+    assert reasons(preview(session, clock, TEMPLATE, preset="stale_price"))["s1"] == [reason.format(first.id)]
 
     clock.advance(timedelta(seconds=1))
     assert "c1" in sent(preview(session, clock, TEMPLATE, preset="stale_price"))

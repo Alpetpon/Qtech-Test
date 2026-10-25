@@ -123,13 +123,16 @@ def load(session: Session) -> tuple[list[Supplier], list[Chat]]:
 
 
 def busy_chats(session: Session, now: datetime) -> dict[str, str]:
-    """Чаты, где сообщение другой рассылки еще не ушло или ушло меньше 14 дней назад.
+    """Чаты, где сообщение другой рассылки еще не ушло или ушло (unknown значит могло уйти) меньше 14 дней назад.
 
     Ушедшее сообщение видно и по last_outbound_at чата, но очередь держит чат и без него.
     """
     messages = session.scalars(
         select(models.OutboxMessage).where(
-            or_(models.OutboxMessage.status != "sent", models.OutboxMessage.sent_at > now - RESEND_AFTER)
+            or_(
+                models.OutboxMessage.status.in_(("pending", "sending")),
+                models.OutboxMessage.sent_at > now - RESEND_AFTER,
+            )
         )
     )
     return {message.chat_id: busy_reason(message) for message in messages}

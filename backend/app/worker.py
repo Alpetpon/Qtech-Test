@@ -9,7 +9,7 @@ from app.clock import AppClock, Clock
 from app.config import settings
 from app.db import engine
 from app.messenger.sender import Sender, StubSender
-from app.services.sending import send_next
+from app.services.sending import recover, send_next
 
 log = logging.getLogger("app.worker")
 
@@ -20,12 +20,19 @@ def run(stop: threading.Event) -> None:
     clock = AppClock(settings.clock_start)
     rng = random.Random()
     sender = StubSender(lambda attempt: rng.random() < settings.rate_limit_chance)
+    start(clock, rng)
     while not stop.is_set():
         try:
             tick(clock, sender, rng)
         except Exception:
             log.exception("Шаг отправки упал, повторим на следующем тике")
         stop.wait(TICK_SECONDS)
+
+
+def start(clock: Clock, rng: random.Random) -> None:
+    """До первого тика: отправки, прерванные падением прошлого процесса, помечаем unknown."""
+    with Session(engine) as session:
+        recover(session, clock, rng)
 
 
 def tick(clock: Clock, sender: Sender, rng: random.Random) -> None:

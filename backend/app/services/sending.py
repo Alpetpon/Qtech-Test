@@ -73,23 +73,56 @@ def send_locked(session: Session, clock: Clock, sender: Sender, rng: random.Rand
         return None
 
     sent_at = clock.now()
-    message.status, message.sent_at = "sent", sent_at
     session.get(models.Chat, chat_id).last_outbound_at = sent_at
-    session.execute(
-        update(models.CampaignSupplier)
-        .where(models.CampaignSupplier.campaign_id == campaign_id, models.CampaignSupplier.chat_id == chat_id)
-        .values(status="sent")
-    )
-    next_send_at = sent_at + timedelta(seconds=rng.randint(*PAUSE_SECONDS))
-    state = session.get(models.SenderState, ACCOUNT) or models.SenderState(account=ACCOUNT)
-    state.next_send_at = next_send_at
-    session.add(state)
-    unsent = exists().where(models.OutboxMessage.campaign_id == campaign_id, models.OutboxMessage.status != "sent")
-    if not session.scalar(select(unsent)):
-        session.get(models.Campaign, campaign_id).status = "sent"
+    next_send_at = settle(session, message, "sent", sent_at, rng)
     session.commit()
     log.info("Рассылка №%s: отправлено в чат %s, следующее — не раньше %s", campaign_id, chat_id, next_send_at)
     return message
+
+
+def recover(session: Session, clock: Clock, rng: random.Random) -> None:
+    """При старте воркера: строки sending оставил процесс, упавший посреди отправки.
+
+    Ушло ли такое сообщение, неизвестно. Ставим unknown и больше не отправляем: лучше одно потерянное
+    сообщение, которое человек проверит, чем дубль в чате поставщика.
+    """
+    # Ждём, пока другой воркер закончит шаг: под блокировкой аккаунта sending может быть только брошенной
+    session.execute(select(func.pg_advisory_xact_lock(LOCK)))
+    now = clock.now()
+    messages = session.scalars(
+        select(models.OutboxMessage).where(models.OutboxMessage.status == "sending").order_by(models.OutboxMessage.id)
+    ).all()
+    for message in messages:
+        settle(session, message, "unknown", now, rng)
+        log.warning(
+            "Рассылка №%s: неизвестно, ушло ли сообщение в чат %s, — повторно не отправляем, проверьте чат",
+            message.campaign_id,
+            message.chat_id,
+        )
+    session.commit()
+
+
+def settle(session: Session, message: models.OutboxMessage, status: str, at: datetime, rng: random.Random) -> datetime:
+    """Итог отправки: sent — ушло, unknown — могло уйти. Для снимка, паузы, лимита и 14 дней они одинаковы.
+
+    last_outbound_at чата здесь не трогаем: у unknown неизвестно, писали ли. Возвращает конец паузы.
+    """
+    campaign_id, chat_id = message.campaign_id, message.chat_id
+    message.status, message.sent_at = status, at
+    session.execute(
+        update(models.CampaignSupplier)
+        .where(models.CampaignSupplier.campaign_id == campaign_id, models.CampaignSupplier.chat_id == chat_id)
+        .values(status=status)
+    )
+    state = session.get(models.SenderState, ACCOUNT) or models.SenderState(account=ACCOUNT)
+    state.next_send_at = at + timedelta(seconds=rng.randint(*PAUSE_SECONDS))
+    session.add(state)
+    unsent = exists().where(
+        models.OutboxMessage.campaign_id == campaign_id, models.OutboxMessage.status.in_(("pending", "sending"))
+    )
+    if not session.scalar(select(unsent)):
+        session.get(models.Campaign, campaign_id).status = "sent"
+    return state.next_send_at
 
 
 def ready_at(session: Session, now: datetime) -> datetime:
@@ -103,7 +136,7 @@ def ready_at(session: Session, now: datetime) -> datetime:
     # Окно скользящее, место освобождается, когда сотое с конца сообщение старше 24 часов
     hundredth = session.scalar(
         select(models.OutboxMessage.sent_at)
-        .where(models.OutboxMessage.status == "sent")
+        .where(models.OutboxMessage.status.in_(("sent", "unknown")))
         .order_by(models.OutboxMessage.sent_at.desc())
         .offset(LIMIT - 1)
         .limit(1)
