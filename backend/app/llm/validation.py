@@ -5,7 +5,8 @@ from decimal import Decimal
 
 from pydantic import ValidationError
 
-from app.llm.schema import CURRENCIES, Analysis, Answer, AnswerItem, Item, Reply, ReplyType
+from app.domain.offers import CURRENCIES
+from app.llm.schema import Analysis, Answer, AnswerItem, Item, Reply, ReplyType
 
 # Размеры вида 40x30x30: их числа не бывают ни ценой, ни партией
 DIMENSIONS = re.compile(r"\d+(?:[.,]\d+)?(?:\s*[xXхХ×*]\s*\d+(?:[.,]\d+)?)+")

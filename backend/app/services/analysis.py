@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from app import models
 from app.clock import Clock
+from app.domain.offers import Fields, problems
 from app.domain.replies import QUIET, UNKNOWN_SUPPLIER, handle
 from app.domain.statuses import OFFER, OTHER, REFUSAL
 from app.llm import Analysis, Item, LLMClient, LLMError, Reply, ReplyType, analyze
@@ -159,17 +160,8 @@ def offer(reply: models.Reply, item: Item, quote: str) -> models.Offer:
         lead_time_days=item.lead_time_days,
         regions=item.regions,
         quote=quote,
-        review=missing(item),
+        review=problems(
+            reply.supplier_id,
+            Fields(item.product, item.price, item.currency, item.moq, item.lead_time_days, tuple(item.regions)),
+        ),
     )
-
-
-def missing(item: Item) -> list[str]:
-    """Чего не хватает, чтобы применить предложение: человек впишет сам перед «Применить»."""
-    reasons = []
-    if item.product is None:
-        reasons.append("товар не указан")
-    if item.price is None:
-        reasons.append("цена не указана")
-    if item.currency is None:
-        reasons.append("валюта не указана")
-    return reasons

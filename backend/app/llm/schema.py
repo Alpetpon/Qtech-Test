@@ -5,9 +5,6 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, WithJsonSchema
 
-# Валюты ISO 4217, которые принимаем от модели; другая валюта — поле пустое и «проверить вручную»
-CURRENCIES = frozenset({"RUB", "USD", "EUR", "CNY", "GBP", "CHF", "JPY", "PLN", "TRY", "AED", "KZT", "BYN"})
-
 
 class ReplyType(StrEnum):
     OFFER = "offer"

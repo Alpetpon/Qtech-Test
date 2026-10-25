@@ -207,3 +207,25 @@ class Offer(Base):
     applied_at: Mapped[datetime | None]
     # Последнее сообщение дополнения, пришедшего после правки или применения
     supplement_at: Mapped[datetime | None]
+
+
+class Price(Base):
+    """Позиция прайса поставщика: поля применённого предложения.
+
+    Прайс хранится историей: каждое «Применить» добавляет запись, прежние остаются.
+    Действующая цена товара — последняя запись поставщика по этому товару.
+    """
+
+    __tablename__ = "prices"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    supplier_id: Mapped[str] = mapped_column(ForeignKey("suppliers.id"))
+    # Из какого предложения: второй записи из того же предложения база не даст
+    offer_id: Mapped[int] = mapped_column(ForeignKey("offers.id"), unique=True)
+    product: Mapped[str]
+    price: Mapped[Decimal] = mapped_column(Numeric)
+    currency: Mapped[str]
+    moq: Mapped[int | None]
+    lead_time_days: Mapped[int | None]
+    regions: Mapped[list[str]] = mapped_column(ARRAY(String))
+    applied_at: Mapped[datetime]
