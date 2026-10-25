@@ -131,3 +131,16 @@ def apply_offer(offer_id: int, session: SessionDep, clock: ClockDep) -> schemas.
 def unbound(session: SessionDep) -> list[schemas.Unbound]:
     """Входящие поставщиков, не засчитанные ни одной рассылке."""
     return [schemas.Unbound.model_validate(item) for item in report.unbound(session)]
+
+
+@router.get("/clock", tags=["часы"])
+def now(clock: ClockDep) -> schemas.Clock:
+    """Текущее время по часам задания — общее для API и воркера."""
+    return schemas.Clock(now=clock.now())
+
+
+@router.post("/clock/advance", tags=["часы"], responses=refusals(422))
+def advance(step: schemas.Advance, clock: ClockDep) -> schemas.Clock:
+    """Перемотка вперёд: воркер увидит новое время на следующем шаге, через секунду. Назад нельзя — 422."""
+    clock.advance(step.by)
+    return schemas.Clock(now=clock.now())

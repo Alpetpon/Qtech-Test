@@ -1,6 +1,6 @@
 """Запросы и ответы HTTP API. По этим моделям фронтенд генерирует свои типы из OpenAPI."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Literal, Self
 
@@ -221,3 +221,20 @@ class Unbound(Schema):
     attachment: str | None
     mark: str = Field(description="Почему не засчитано: вне окна, в чат не отправляли, непонятно от кого…")
     campaign_id: int | None
+
+
+class Clock(Schema):
+    """Часы задания: текущее время — общее для API и воркера."""
+
+    now: datetime
+
+
+class Advance(BaseModel):
+    """Перемотка часов вперёд, чтобы в демо увидеть ответы поставщиков и «молчит» без ожидания."""
+
+    # Больше года за раз демо не нужно, а огромный сдвиг вывел бы время сервиса за пределы дат и остановил бы часы
+    by: timedelta = Field(
+        gt=timedelta(0),
+        le=timedelta(days=365),
+        description="ISO 8601: PT1H — час, P1D — день; число — секунды. Только вперёд, не больше года за раз",
+    )

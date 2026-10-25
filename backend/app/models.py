@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from sqlalchemy import ARRAY, CheckConstraint, Column, DateTime, ForeignKey, Numeric, String, Table, UniqueConstraint
@@ -229,3 +229,19 @@ class Price(Base):
     lead_time_days: Mapped[int | None]
     regions: Mapped[list[str]] = mapped_column(ARRAY(String))
     applied_at: Mapped[datetime]
+
+
+class ClockState(Base):
+    """Часы задания, общие для API и воркера: одна строка.
+
+    Текущее время = start + (реальное время − real_start) + shift. real_start — единственное реальное время
+    в базе, момент первого запуска; остальные времена в базе — время задания. shift копит перемотку вперёд.
+    """
+
+    __tablename__ = "clock"
+    __table_args__ = (CheckConstraint("id = 1", name="clock_single_row"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    start: Mapped[datetime]
+    real_start: Mapped[datetime]
+    shift: Mapped[timedelta]

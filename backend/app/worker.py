@@ -6,7 +6,7 @@ from collections.abc import Sequence
 
 from sqlalchemy.orm import Session
 
-from app.clock import AppClock, Clock
+from app.clock import Clock, SharedClock
 from app.config import settings
 from app.db import engine
 from app.domain.replies import Incoming
@@ -25,13 +25,14 @@ ANALYSIS_RETRY_SECONDS = 60
 
 
 def run(stop: threading.Event) -> None:
-    clock = AppClock(settings.clock_start)
+    clock = SharedClock(engine, settings.clock_start)
     rng = random.Random()
     sender = StubSender(lambda attempt: rng.random() < settings.rate_limit_chance)
     # Входящие заглушки мессенджера — из тех же папок, что и справочники
     scenario = inbox_replay.load(settings.data_dir, settings.data_dir / "extra")
     client = llm_client()
     start(clock, rng)
+    log.info("Сейчас по часам задания: %s", clock.now().isoformat())
     # Модель отвечает секундами: разбор в своём потоке, чтобы отправка и приём её не ждали. Поток-демон:
     # разбор сохраняется одной транзакцией, и прерванный остановкой ответ разберётся после перезапуска
     threading.Thread(target=analyze_loop, args=(stop, clock, client), name="analysis", daemon=True).start()
@@ -115,7 +116,7 @@ def main() -> None:
     # Сигнал поднимает флаг, начатая отправка доходит до отметки sent, новая не начинается
     for signum in (signal.SIGTERM, signal.SIGINT):
         signal.signal(signum, lambda *_: stop.set())
-    log.info("Воркер отправки запущен, часы идут от %s", settings.clock_start.isoformat())
+    log.info("Воркер отправки запущен")
     run(stop)
     log.info("Воркер отправки остановлен")
 
