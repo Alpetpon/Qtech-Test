@@ -1,0 +1,11 @@
+{
+  "source": "api",
+  "model": "anthropic/claude-sonnet-5.5",
+  "request": [
+    {
+      "role": "user",
+      "content": "Вложения: нет\n<reply>\nДобрый день! Скотч 48 мм — 0,60 USD/шт, от 200 шт; стрейч-плёнка 500 мм — 1,85 USD/рулон, от 50 рулонов. Срок 5 дней, доставка по Казахстану\n</reply>"
+    }
+  ],
+  "response": "{\"type\":\"offer\",\"items\":[{\"product\":\"Скотч 48 мм\",\"price\":0.6,\"currency\":\"USD\",\"moq\":200,\"lead_time_days\":5,\"regions\":[\"Казахстан\"]},{\"product\":\"стрейч-плёнка 500 мм\",\"price\":1.85,\"currency\":\"USD\",\"moq\":50,\"lead_time_days\":5,\"regions\":[\"Казахстан\"]}],\"notes\":[],\"supplier_hint\":null}"
+}

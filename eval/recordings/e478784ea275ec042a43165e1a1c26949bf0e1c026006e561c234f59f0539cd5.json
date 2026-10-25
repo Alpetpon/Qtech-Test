@@ -1,0 +1,11 @@
+{
+  "source": "api",
+  "model": "anthropic/claude-sonnet-5.5",
+  "request": [
+    {
+      "role": "user",
+      "content": "Вложения: нет\n<reply>\nК сожалению, этим направлением мы больше не занимаемся. Всего доброго!\n</reply>"
+    }
+  ],
+  "response": "{\"type\":\"refusal\",\"items\":[],\"notes\":[],\"supplier_hint\":null}"
+}

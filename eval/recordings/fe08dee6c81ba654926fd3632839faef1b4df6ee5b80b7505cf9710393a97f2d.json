@@ -1,0 +1,11 @@
+{
+  "source": "api",
+  "model": "anthropic/claude-sonnet-5.5",
+  "request": [
+    {
+      "role": "user",
+      "content": "Вложения: нет\n<reply>\nСпасибо, но производство загружено до января — новые заказы пока не принимаем\n</reply>"
+    }
+  ],
+  "response": "{\"type\": \"refusal\", \"items\": [], \"notes\": [], \"supplier_hint\": null}"
+}
