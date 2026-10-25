@@ -119,3 +119,46 @@ class SenderState(Base):
     paused_at: Mapped[datetime | None]
     paused_until: Mapped[datetime | None]
     pause_reason: Mapped[str | None]
+
+
+class InboxMessage(Base):
+    """Входящее сообщение, как пришло из мессенджера.
+
+    Разобранное — либо часть ответа (reply_id), либо с пометкой, почему не ответ (mark).
+    """
+
+    __tablename__ = "inbox"
+    __table_args__ = (
+        UniqueConstraint("chat_id", "external_id"),
+        CheckConstraint("mark IS NULL OR reply_id IS NULL", name="inbox_reply_or_mark"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    chat_id: Mapped[str] = mapped_column(ForeignKey("chats.id"))
+    # id сообщения в мессенджере: повторная выдача того же сообщения не добавит строку
+    external_id: Mapped[str]
+    sender: Mapped[str]
+    received_at: Mapped[datetime]
+    text: Mapped[str]
+    attachment: Mapped[str | None]
+    reply_id: Mapped[int | None] = mapped_column(ForeignKey("replies.id"))
+    mark: Mapped[str | None]
+
+
+class Reply(Base):
+    """Ответ на сообщение рассылки: сообщения одного ника подряд с паузами меньше 10 минут.
+
+    Поставщик пустой — непонятно, от какой компании: ответ остаётся на чате отправки.
+    """
+
+    __tablename__ = "replies"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    outbox_id: Mapped[int] = mapped_column(ForeignKey("outbox.id"))
+    sender: Mapped[str]
+    supplier_id: Mapped[str | None] = mapped_column(ForeignKey("suppliers.id"))
+    mark: Mapped[str | None]
+    # Последнее сообщение: через 10 минут тишины после него ответ закрыт
+    last_at: Mapped[datetime]
+
+    messages: Mapped[list[InboxMessage]] = relationship(order_by=[InboxMessage.received_at, InboxMessage.id])
