@@ -1,0 +1,22 @@
+[project]
+name = "qtech"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.20",
+    "fastapi>=0.161",
+    "psycopg[binary]>=3.3",
+    "pydantic-settings>=2.16",
+    "sqlalchemy>=2.1",
+    "uvicorn[standard]>=0.54",
+]
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.16",
+    "pytest>=9.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

@@ -1,0 +1,65 @@
+x-postgres-env: &postgres-env
+  POSTGRES_USER: ${POSTGRES_USER:?задайте в .env, см. .env.example}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?задайте в .env, см. .env.example}
+  POSTGRES_DB: ${POSTGRES_DB:?задайте в .env, см. .env.example}
+
+x-postgres-healthcheck: &postgres-healthcheck
+  test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+  interval: 2s
+  timeout: 3s
+  retries: 15
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment: *postgres-env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck: *postgres-healthcheck
+
+  app:
+    build:
+      context: .
+      target: runtime
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      <<: *postgres-env
+      POSTGRES_HOST: db
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  test-db:
+    image: postgres:16-alpine
+    profiles: [test]
+    environment: *postgres-env
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck: *postgres-healthcheck
+    networks: [isolated]
+
+  tests:
+    build:
+      context: .
+      target: test
+    profiles: [test]
+    environment:
+      <<: *postgres-env
+      POSTGRES_HOST: test-db
+    command: pytest
+    depends_on:
+      test-db:
+        condition: service_healthy
+    networks: [isolated]
+
+volumes:
+  pgdata:
+
+networks:
+  isolated:
+    internal: true

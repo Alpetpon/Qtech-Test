@@ -1,0 +1,17 @@
+[
+  {"id": "s7", "name": "Borealis Glass", "status": "active", "manager": "Анна", "price_updated_at": "2026-06-15", "last_activity_at": "2026-10-10"},
+  {"id": "s8", "name": "Helio Metals", "status": "active", "manager": "Игорь", "price_updated_at": null, "last_activity_at": "2026-10-15"},
+  {"id": "s9", "name": "Pinewood Pallets", "status": "active", "manager": "Анна", "price_updated_at": "2026-09-02", "last_activity_at": "2026-10-05"},
+  {"id": "s10", "name": "Lumen Labels", "status": "active", "manager": "Анна", "price_updated_at": "2026-09-01", "last_activity_at": "2026-10-05"},
+  {"id": "s11", "name": "Coral Chem", "status": "new", "manager": "Игорь", "price_updated_at": null, "last_activity_at": "2026-10-02"},
+  {"id": "s12", "name": "Atlas Fasteners", "status": "new", "manager": "Игорь", "price_updated_at": null, "last_activity_at": "2026-10-01"},
+  {"id": "s13", "name": "Sigma Boxes", "status": "active", "manager": "Анна", "price_updated_at": "2026-07-05", "last_activity_at": "2026-10-12"},
+  {"id": "s14", "name": "Vega Foil", "status": "active", "manager": "Игорь", "price_updated_at": "2026-06-20", "last_activity_at": "2026-10-12"},
+  {"id": "s15", "name": "Delta Tools", "status": "active", "manager": "Игорь", "price_updated_at": "2026-06-01", "last_activity_at": "2026-10-10"},
+  {"id": "s16", "name": "Delta Logistics", "status": "new", "manager": "Игорь", "price_updated_at": null, "last_activity_at": "2026-10-25"},
+  {"id": "s17", "name": "Orion Cups", "status": "new", "manager": "Игорь", "price_updated_at": null, "last_activity_at": "2026-09-01"},
+  {"id": "s18", "name": "Nova Cartons", "status": "active", "manager": "Анна", "price_updated_at": "2026-06-10", "last_activity_at": "2026-10-15"},
+  {"id": "s19", "name": "Polar Film", "status": "new", "manager": "  ", "price_updated_at": null, "last_activity_at": "2026-10-20"},
+  {"id": "s20", "name": "Ridge Paper", "status": "active", "manager": "Анна", "price_updated_at": "2026-07-20", "last_activity_at": "2026-10-01"},
+  {"id": "s21", "name": "Fjord Textile", "status": "active", "manager": "Игорь", "price_updated_at": "2026-07-25", "last_activity_at": "2026-10-01"}
+]

@@ -1,0 +1,5 @@
+[
+  {"handle": "@nordpack_sales", "supplier_id": "s1"},
+  {"handle": "@kestrel_sales", "supplier_id": "s3"},
+  {"handle": "@kestrel_eu", "supplier_id": "s4"}
+]

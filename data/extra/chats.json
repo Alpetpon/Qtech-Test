@@ -1,0 +1,16 @@
+[
+  {"id": "c6", "title": "Borealis / Us", "supplier_ids": ["s7"], "enabled": true, "member": false, "last_outbound_at": "2026-07-01"},
+  {"id": "c7", "title": "Helio x Us", "supplier_ids": ["s8"], "enabled": true, "member": true, "last_outbound_at": null},
+  {"id": "c8", "title": "Pinewood x Us", "supplier_ids": ["s9"], "enabled": true, "member": true, "last_outbound_at": "2026-07-15"},
+  {"id": "c9", "title": "Lumen x Us", "supplier_ids": ["s10"], "enabled": true, "member": true, "last_outbound_at": "2026-08-01"},
+  {"id": "c10", "title": "Coral x Us", "supplier_ids": ["s11"], "enabled": true, "member": true, "last_outbound_at": "2026-07-20"},
+  {"id": "c11", "title": "Atlas x Us", "supplier_ids": ["s12"], "enabled": true, "member": true, "last_outbound_at": "2026-08-05"},
+  {"id": "c12", "title": "Sigma x Us", "supplier_ids": ["s13"], "enabled": true, "member": true, "last_outbound_at": "2026-10-18"},
+  {"id": "c13", "title": "Vega x Us", "supplier_ids": ["s14"], "enabled": true, "member": true, "last_outbound_at": "2026-10-19"},
+  {"id": "c14", "title": "Delta Group", "supplier_ids": ["s15", "s16"], "enabled": true, "member": true, "last_outbound_at": "2026-08-15"},
+  {"id": "c15", "title": "Orion & partners", "supplier_ids": ["s17", "s99"], "enabled": true, "member": true, "last_outbound_at": "2026-08-20"},
+  {"id": "c16", "title": "Nova x Us", "supplier_ids": ["s18"], "enabled": true, "member": true, "last_outbound_at": "2026-11-03"},
+  {"id": "c17", "title": "Polar x Us", "supplier_ids": ["s19"], "enabled": true, "member": true, "last_outbound_at": "2026-08-01"},
+  {"id": "c18", "title": "Ridge x Us", "supplier_ids": ["s20"], "enabled": true, "member": true, "last_outbound_at": "2026-08-10"},
+  {"id": "c19", "title": "Fjord x Us", "supplier_ids": ["s21"], "enabled": true, "member": true, "last_outbound_at": "2026-08-12"}
+]

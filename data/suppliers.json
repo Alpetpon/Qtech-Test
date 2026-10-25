@@ -1,0 +1,8 @@
+[
+  {"id": "s1", "name": "NordPack", "status": "active", "manager": "Анна", "price_updated_at": "2026-07-10", "last_activity_at": "2026-10-20"},
+  {"id": "s2", "name": "Orbis Trade", "status": "active", "manager": null, "price_updated_at": "2026-07-01", "last_activity_at": "2026-10-28"},
+  {"id": "s3", "name": "Kestrel Foods", "status": "new", "manager": "Игорь", "price_updated_at": null, "last_activity_at": "2026-09-01"},
+  {"id": "s4", "name": "Kestrel Foods EU", "status": "new", "manager": "Игорь", "price_updated_at": null, "last_activity_at": "2026-08-15"},
+  {"id": "s5", "name": "Velta Textile", "status": "active", "manager": "Анна", "price_updated_at": "2026-05-01", "last_activity_at": "2026-06-01"},
+  {"id": "s6", "name": "Quasar Parts", "status": "new", "manager": "Игорь", "price_updated_at": null, "last_activity_at": "2026-09-10"}
+]

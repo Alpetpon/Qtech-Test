@@ -1,0 +1,11 @@
+[
+  {"handle": "@orbis_sales", "supplier_id": "s2"},
+  {"handle": "@helio_sales", "supplier_id": "s8"},
+  {"handle": "@lumen_sales", "supplier_id": "s10"},
+  {"handle": "@atlas_sales", "supplier_id": "s12"},
+  {"handle": "@sigma_sales", "supplier_id": "s13"},
+  {"handle": "@delta_sales", "supplier_id": "s15"},
+  {"handle": "@orion_sales", "supplier_id": "s17"},
+  {"handle": "@ridge_sales", "supplier_id": "s20"},
+  {"handle": "@fjord_sales", "supplier_id": "s21"}
+]

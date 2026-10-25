@@ -1,0 +1,6 @@
+[
+  {"id": "c1", "title": "NordPack x Us", "supplier_ids": ["s1"], "enabled": true, "member": true, "last_outbound_at": "2026-09-01"},
+  {"id": "c2", "title": "Orbis / Us", "supplier_ids": ["s2"], "enabled": true, "member": true, "last_outbound_at": "2026-10-25"},
+  {"id": "c3", "title": "Kestrel Group", "supplier_ids": ["s3", "s4"], "enabled": true, "member": true, "last_outbound_at": "2026-08-10"},
+  {"id": "c5", "title": "Velta partners", "supplier_ids": ["s5"], "enabled": false, "member": true, "last_outbound_at": null}
+]
