@@ -81,3 +81,21 @@ test("рассылка от запуска до «Применить» на пе
     );
   });
 });
+
+test("пустой менеджер вписывают в превью, и рассылка запускается", async ({ page }) => {
+  // Через 7 дней в чат Orbis Trade снова можно писать, а менеджера у него в данных нет
+  await expect(await page.request.post("/api/clock/advance", { data: { by: "P7D" } })).toBeOK();
+  await page.goto("/");
+  await page.getByLabel("Активные, прайс устарел").check();
+  await page.getByRole("button", { name: "Показать превью" }).click();
+  await expect(page.getByText("У Orbis Trade пустой менеджер")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Запустить" })).toBeDisabled();
+
+  await page.getByLabel("Менеджер Orbis Trade").fill("Игорь");
+  await page.getByRole("button", { name: "Сохранить" }).click();
+  await expect(page.getByText("Запуск заблокирован:")).toHaveCount(0);
+  await expect(page.getByRole("listitem").filter({ hasText: "Чат «Orbis / Us»" })).toContainText("С уважением, Игорь");
+
+  await page.getByRole("button", { name: "Запустить" }).click();
+  await expect(page).toHaveURL(/\/campaigns\/\d+$/);
+});

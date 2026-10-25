@@ -182,6 +182,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/suppliers/{supplier_id}/manager": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Manager
+         * @description Менеджер, если в данных он пустой: вписывают в превью. Только в базе — файлы данных не меняются.
+         */
+        put: operations["set_manager_api_suppliers__supplier_id__manager_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/inbox/unbound": {
         parameters: {
             query?: never;
@@ -348,6 +368,14 @@ export interface components {
              */
             template: string;
         };
+        /**
+         * ManagerChange
+         * @description Менеджер поставщика, если в данных он пустой. Пробелы по краям обрезаются.
+         */
+        ManagerChange: {
+            /** Manager */
+            manager: string;
+        };
         /** Message */
         Message: {
             /** Sender */
@@ -438,12 +466,17 @@ export interface components {
             statuses: ("active" | "new")[];
             /** Default Template */
             default_template: string;
+            /**
+             * Managers
+             * @description Известные закупщики — подсказки, когда у поставщика пустой менеджер
+             */
+            managers: string[];
         };
         /** Outgoing */
         Outgoing: {
             chat: components["schemas"]["ChatRef"];
             /** Suppliers */
-            suppliers: components["schemas"]["SupplierRef"][];
+            suppliers: components["schemas"]["SupplierWithManager"][];
             /**
              * Text
              * @description Сообщение, как оно уйдёт; пусто — шаблон для чата не заполнить
@@ -653,6 +686,18 @@ export interface components {
             id: string;
             /** Name */
             name: string;
+        };
+        /** SupplierWithManager */
+        SupplierWithManager: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Manager
+             * @description Пусто — менеджера нет или он из одних пробелов
+             */
+            manager: string | null;
         };
         /** Totals */
         Totals: {
@@ -1045,6 +1090,50 @@ export interface operations {
             };
             /** @description Conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    set_manager_api_suppliers__supplier_id__manager_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                supplier_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ManagerChange"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierWithManager"];
+                };
+            };
+            /** @description Not Found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

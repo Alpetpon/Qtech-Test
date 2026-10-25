@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic_core import PydanticCustomError
 
 from app.seed import STATUSES
@@ -37,6 +37,7 @@ class Options(Schema):
     presets: list[Preset]
     statuses: list[SupplierStatus]
     default_template: str
+    managers: list[str] = Field(description="Известные закупщики — подсказки, когда у поставщика пустой менеджер")
 
 
 class Launch(BaseModel):
@@ -58,6 +59,28 @@ class SupplierRef(Schema):
     name: str
 
 
+class SupplierWithManager(SupplierRef):
+    manager: str | None = Field(description="Пусто — менеджера нет или он из одних пробелов")
+
+    @field_validator("manager")
+    @classmethod
+    def strip(cls, value: str | None) -> str | None:
+        return (value or "").strip() or None
+
+
+class ManagerChange(BaseModel):
+    """Менеджер поставщика, если в данных он пустой. Пробелы по краям обрезаются."""
+
+    manager: str
+
+    @model_validator(mode="after")
+    def not_blank(self) -> Self:
+        self.manager = self.manager.strip()
+        if not self.manager:
+            raise PydanticCustomError("blank", "Впишите имя менеджера: пустое значение не подставить в шаблон")
+        return self
+
+
 class ChatRef(Schema):
     id: str
     title: str
@@ -71,7 +94,7 @@ class Totals(Schema):
 
 class Outgoing(Schema):
     chat: ChatRef
-    suppliers: list[SupplierRef]
+    suppliers: list[SupplierWithManager]
     text: str | None = Field(description="Сообщение, как оно уйдёт; пусто — шаблон для чата не заполнить")
 
 

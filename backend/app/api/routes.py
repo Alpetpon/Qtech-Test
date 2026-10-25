@@ -13,7 +13,7 @@ from app.domain.offers import Fields
 from app.domain.preview import Outgoing
 from app.domain.template import check, render
 from app.seed import STATUSES
-from app.services import campaigns, offers, report, sending
+from app.services import campaigns, offers, report, sending, suppliers
 
 router = APIRouter(prefix="/api")
 
@@ -30,9 +30,14 @@ def refusals(*codes: int) -> dict[int | str, dict[str, Any]]:
 
 
 @router.get("/options", tags=["рассылки"])
-def options() -> schemas.Options:
+def options(session: SessionDep) -> schemas.Options:
     presets = [schemas.Preset(id=preset, title=TITLES[preset]) for preset in campaigns.PRESETS]
-    return schemas.Options(presets=presets, statuses=list(STATUSES), default_template=TEMPLATE)
+    return schemas.Options(
+        presets=presets,
+        statuses=list(STATUSES),
+        default_template=TEMPLATE,
+        managers=suppliers.known_managers(session),
+    )
 
 
 @router.post("/campaigns/preview", tags=["рассылки"], responses=refusals(422))
@@ -125,6 +130,16 @@ def apply_offer(offer_id: int, session: SessionDep, clock: ClockDep) -> schemas.
     price = offers.apply(session, clock, offer_id)
     session.commit()
     return schemas.Price.model_validate(price)
+
+
+@router.put("/suppliers/{supplier_id}/manager", tags=["поставщики"], responses=refusals(404, 422))
+def set_manager(supplier_id: str, change: schemas.ManagerChange, session: SessionDep) -> schemas.SupplierWithManager:
+    """Менеджер, если в данных он пустой: вписывают в превью. Только в базе — файлы данных не меняются."""
+    supplier = suppliers.set_manager(session, supplier_id, change.manager)
+    if supplier is None:
+        raise HTTPException(404, [f"поставщика {supplier_id} нет"])
+    session.commit()
+    return schemas.SupplierWithManager.model_validate(supplier)
 
 
 @router.get("/inbox/unbound", tags=["входящие"])

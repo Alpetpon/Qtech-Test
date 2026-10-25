@@ -9,12 +9,14 @@ from decimal import Decimal
 from pathlib import Path
 from unittest.mock import ANY
 
+from sqlalchemy import select
+
 from app.config import settings
 from app.domain.replies import QUIET
 from app.llm.client import ReplayClient
 from app.messenger import inbox_replay
 from app.messenger.sender import StubSender
-from app.models import InboxMessage
+from app.models import InboxMessage, OutboxMessage, Supplier
 from app.seed import load
 from app.services import analysis, inbox, statuses
 from app.services.sending import send_next
@@ -60,6 +62,11 @@ def moment(value):
     return datetime.fromisoformat(value)
 
 
+def manager(session, supplier_id):
+    """Из базы, а не из объекта в сессии: его значение могло остаться от запроса."""
+    return session.scalar(select(Supplier.manager).where(Supplier.id == supplier_id))
+
+
 def fields(offer):
     return {name: offer[name] for name in ("product", "price", "currency", "moq", "lead_time_days", "regions")}
 
@@ -84,6 +91,7 @@ def test_openapi_lists_routes(client):
         "/api/offers/{offer_id}",
         "/api/offers/{offer_id}/supplier",
         "/api/offers/{offer_id}/apply",
+        "/api/suppliers/{supplier_id}/manager",
         "/api/inbox/unbound",
     }
     # Отказы и неверные запросы — одна модель: фронтенд разбирает их одинаково
@@ -102,6 +110,14 @@ def test_options(client):
     ]
     assert body["statuses"] == ["active", "new"]
     assert "{supplier}" in body["default_template"] and "{manager}" in body["default_template"]
+    assert body["managers"] == []
+
+
+def test_options_suggest_known_managers(client, session):
+    # У Polar Film в data/extra менеджер из пробелов: в подсказки он не попадает
+    load(session, DATA, DATA / "extra")
+
+    assert client.get("/api/options").json()["managers"] == ["Анна", "Игорь"]
 
 
 def test_preview_active_preset(client, session):
@@ -115,7 +131,7 @@ def test_preview_active_preset(client, session):
         "outgoing": [
             {
                 "chat": NORDPACK,
-                "suppliers": [{"id": "s1", "name": "NordPack"}],
+                "suppliers": [{"id": "s1", "name": "NordPack", "manager": "Анна"}],
                 "text": "Здравствуйте, NordPack! Пришлите, пожалуйста, актуальный прайс.\nС уважением, Анна",
             }
         ],
@@ -143,6 +159,56 @@ def test_blank_manager_blocks_launch(client, session, clock):
     assert response.status_code == 422
     assert response.json() == {"detail": ["У Orbis Trade пустой менеджер"]}
     assert client.get("/api/campaigns").json() == []
+
+
+def test_manager_entered_in_preview_unblocks_launch(client, session, clock):
+    load(session, DATA)
+    clock.set(datetime(2026, 11, 8, tzinfo=UTC))
+    selection = {"preset": "stale_price", "template": TEMPLATE}
+    blocked = client.post("/api/campaigns/preview", json=selection).json()
+    assert blocked["outgoing"][1]["suppliers"] == [{"id": "s2", "name": "Orbis Trade", "manager": None}]
+
+    saved = client.put("/api/suppliers/s2/manager", json={"manager": "  Игорь "})
+
+    assert saved.status_code == 200
+    assert saved.json() == {"id": "s2", "name": "Orbis Trade", "manager": "Игорь"}
+    preview = client.post("/api/campaigns/preview", json=selection).json()
+    assert preview["problems"] == []
+    assert preview["outgoing"][1]["text"] == (
+        "Здравствуйте, Orbis Trade! Пришлите, пожалуйста, актуальный прайс.\nС уважением, Игорь"
+    )
+    campaign = launch(client, **selection)
+    [message] = session.scalars(
+        select(OutboxMessage).where(OutboxMessage.campaign_id == campaign["id"], OutboxMessage.chat_id == "c2")
+    )
+    assert message.text.endswith("С уважением, Игорь")
+
+
+def test_blank_manager_is_refused(client, session):
+    load(session, DATA)
+
+    for blank in ("", "   "):
+        response = client.put("/api/suppliers/s2/manager", json={"manager": blank})
+        assert response.status_code == 422
+        assert response.json() == {"detail": ["Впишите имя менеджера: пустое значение не подставить в шаблон"]}
+    unknown = client.put("/api/suppliers/s404/manager", json={"manager": "Анна"})
+
+    assert (unknown.status_code, unknown.json()) == (404, {"detail": ["поставщика s404 нет"]})
+    assert manager(session, "s2") is None
+
+
+def test_entered_manager_survives_reload(client, session):
+    # Polar Film в data/extra: менеджер из пробелов, файл данных не меняется
+    load(session, DATA, DATA / "extra")
+    selection = {"supplier_status": "new", "template": TEMPLATE}
+    assert client.post("/api/campaigns/preview", json=selection).json()["problems"] == ["У Polar Film пустой менеджер"]
+
+    client.put("/api/suppliers/s19/manager", json={"manager": "Анна"})
+    # Перезапуск: загрузка при старте добавляет только новые записи
+    load(session, DATA, DATA / "extra")
+
+    assert manager(session, "s19") == "Анна"
+    assert client.post("/api/campaigns/preview", json=selection).json()["problems"] == []
 
 
 def test_selection_is_preset_or_status(client, session):

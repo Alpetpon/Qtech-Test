@@ -8,6 +8,7 @@ import "./LaunchPage.css";
 type Options = components["schemas"]["Options"];
 type Launch = components["schemas"]["Launch"];
 type Preview = components["schemas"]["Preview"];
+type SupplierWithManager = components["schemas"]["SupplierWithManager"];
 
 type Choice = { key: string; label: string; select: Omit<Launch, "template"> };
 type Failure = { title: string; reasons: string[] };
@@ -185,13 +186,33 @@ export function LaunchPage() {
         </div>
       )}
 
-      {preview && <PreviewView preview={preview.data} stale={!current} />}
+      {preview && (
+        <PreviewView
+          preview={preview.data}
+          stale={!current}
+          // Пустой менеджер блокирует, только если в шаблоне есть {manager}. Вписать — только в свежем превью:
+          // после сохранения оно строится заново по тому же запросу
+          managers={current && template.includes("{manager}") ? options.managers : undefined}
+          onManagerSaved={showPreview}
+        />
+      )}
     </div>
   );
 }
 
-function PreviewView({ preview, stale }: { preview: Preview; stale: boolean }) {
+type PreviewProps = {
+  preview: Preview;
+  stale: boolean;
+  /** Подсказки имён; не передано — поле «Менеджер» не показывается. */
+  managers?: string[];
+  onManagerSaved: () => Promise<void>;
+};
+
+function PreviewView({ preview, stale, managers, onManagerSaved }: PreviewProps) {
   const { totals, outgoing, excluded, problems } = preview;
+  const missing = managers
+    ? outgoing.flatMap((item) => item.suppliers).filter((supplier) => supplier.manager === null)
+    : [];
   return (
     <section className={stale ? "launch-preview launch-stale" : "launch-preview"}>
       <h2>Превью{stale && " — устарело"}</h2>
@@ -208,6 +229,17 @@ function PreviewView({ preview, stale }: { preview: Preview; stale: boolean }) {
               <li key={problem}>{problem}</li>
             ))}
           </ul>
+          {missing.length > 0 && (
+            <div className="launch-managers">
+              <p className="launch-muted">Впишите менеджера — он сохранится у поставщика, и превью пересчитается.</p>
+              <datalist id="launch-managers">
+                {managers?.map((name) => <option key={name} value={name} />)}
+              </datalist>
+              {missing.map((supplier) => (
+                <ManagerForm key={supplier.id} supplier={supplier} onSaved={onManagerSaved} />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -245,5 +277,57 @@ function PreviewView({ preview, stale }: { preview: Preview; stale: boolean }) {
         </ul>
       )}
     </section>
+  );
+}
+
+function ManagerForm({ supplier, onSaved }: { supplier: SupplierWithManager; onSaved: () => Promise<void> }) {
+  const [manager, setManager] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>();
+
+  async function save() {
+    setBusy(true);
+    setError(undefined);
+    try {
+      const { data, error, response } = await api.PUT("/api/suppliers/{supplier_id}/manager", {
+        params: { path: { supplier_id: supplier.id } },
+        body: { manager },
+      });
+      if (data) await onSaved();
+      else setError(reasonsOf(error, response.status).join(" "));
+    } catch {
+      setError(OFFLINE);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form
+      className="launch-manager"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void save();
+      }}
+    >
+      <label>
+        <span>Менеджер {supplier.name}</span>
+        <input
+          list="launch-managers"
+          value={manager}
+          disabled={busy}
+          autoComplete="off"
+          onChange={(event) => setManager(event.target.value)}
+        />
+      </label>
+      <button type="submit" disabled={busy}>
+        {busy ? "Сохраняем…" : "Сохранить"}
+      </button>
+      {error && (
+        <p className="launch-manager-error" role="alert">
+          Не сохранено: {error}
+        </p>
+      )}
+    </form>
   );
 }

@@ -93,3 +93,37 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+.launch-managers > p {
+  margin: 0.5rem 0;
+}
+
+.launch-manager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.launch-manager label {
+  display: flex;
+  flex: 1 1 10rem;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  max-width: 24rem;
+}
+
+.launch-manager input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0 0.5rem;
+  font: inherit;
+}
+
+.launch-manager-error {
+  flex-basis: 100%;
+  margin: 0;
+}
