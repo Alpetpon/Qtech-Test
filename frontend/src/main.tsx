@@ -5,6 +5,7 @@ import { BrowserRouter, Link, Outlet, Route, Routes } from "react-router";
 import { api } from "./api/client";
 import { CampaignPage } from "./pages/CampaignPage";
 import { LaunchPage } from "./pages/LaunchPage";
+import { ReportPage } from "./pages/ReportPage";
 import "./styles.css";
 
 function BackendStatus() {
@@ -51,6 +52,7 @@ createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<LaunchPage />} />
+          <Route path="campaigns/:id/report" element={<ReportPage />} />
           <Route path="campaigns/:id" element={<CampaignPage />} />
           <Route path="*" element={<NotFound />} />
         </Route>
