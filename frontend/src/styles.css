@@ -1,0 +1,42 @@
+:root {
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+}
+
+#root {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1.5rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #8884;
+}
+
+header p {
+  margin: 0;
+}
+
+.brand {
+  font-weight: bold;
+  font-size: 1.25rem;
+}
+
+main {
+  padding: 1rem 0;
+}
+
+h1 {
+  font-size: 1.5rem;
+}

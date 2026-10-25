@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     postgres_db: str
     postgres_host: str
     data_dir: Path = Path("/app/data")
+    frontend_dir: Path = Path("/app/frontend")
     clock_start: AwareDatetime = datetime(2026, 11, 1, 10, tzinfo=UTC)
     rate_limit_pause: timedelta = timedelta(minutes=15)
     rate_limit_chance: float = Field(default=0.05, ge=0, le=1)
