@@ -11,7 +11,9 @@ COPY backend/pyproject.toml backend/uv.lock ./
 FROM base AS runtime
 RUN uv sync --locked --no-dev
 COPY backend/ ./
+COPY data/ ./data/
 
 FROM base AS test
 RUN uv sync --locked
 COPY backend/ ./
+COPY data/ ./data/

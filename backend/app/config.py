@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings
 from sqlalchemy import URL
 
@@ -7,6 +9,7 @@ class Settings(BaseSettings):
     postgres_password: str
     postgres_db: str
     postgres_host: str
+    data_dir: Path = Path("/app/data")
 
     @property
     def database_url(self) -> URL:
