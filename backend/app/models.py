@@ -1,6 +1,7 @@
 from datetime import datetime
+from decimal import Decimal
 
-from sqlalchemy import ARRAY, CheckConstraint, Column, DateTime, ForeignKey, String, Table, UniqueConstraint
+from sqlalchemy import ARRAY, CheckConstraint, Column, DateTime, ForeignKey, Numeric, String, Table, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -149,9 +150,15 @@ class Reply(Base):
     """Ответ на сообщение рассылки: сообщения одного ника подряд с паузами меньше 10 минут.
 
     Поставщик пустой — непонятно, от какой компании: ответ остаётся на чате отправки.
+    Разбор моделью — закрытого ответа вместе с прежними ответами того же поставщика на эту отправку:
+    позднее дополнение разбирается с тем, что поставщик написал раньше.
     """
 
     __tablename__ = "replies"
+    __table_args__ = (
+        CheckConstraint("type IN ('offer', 'refusal', 'other')", name="replies_type"),
+        CheckConstraint("(type IS NULL) = (analyzed_at IS NULL)", name="replies_analyzed"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     outbox_id: Mapped[int] = mapped_column(ForeignKey("outbox.id"))
@@ -160,5 +167,43 @@ class Reply(Base):
     mark: Mapped[str | None]
     # Последнее сообщение: через 10 минут тишины после него ответ закрыт
     last_at: Mapped[datetime]
+    # Разбор: тип пустой — ответ не закрыт, модель была недоступна или ответ «не по рассылке» и в модель не идёт
+    type: Mapped[str | None]
+    # Пометки модели: «цена во вложении: price_2026.pdf»
+    notes: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, server_default="{}")
+    # Причины «проверить вручную»: что из ответа модели не прошло проверку
+    review: Mapped[list[str]] = mapped_column(ARRAY(String), default=list, server_default="{}")
+    # Кто из поставщиков чата, по мнению модели, ответил, если ника нет в справочнике; выбирает человек
+    supplier_hint: Mapped[str | None] = mapped_column(ForeignKey("suppliers.id"))
+    analyzed_at: Mapped[datetime | None]
 
     messages: Mapped[list[InboxMessage]] = relationship(order_by=[InboxMessage.received_at, InboxMessage.id])
+
+
+class Offer(Base):
+    """Позиция предложения из разобранного ответа: поля, прошедшие проверку, и цитата.
+
+    Дополнение поставщика заменяет его прежние предложения, пока их не правили и не применяли;
+    поправленные и применённые остаются как есть, у них отмечается, что пришло дополнение.
+    """
+
+    __tablename__ = "offers"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    reply_id: Mapped[int] = mapped_column(ForeignKey("replies.id"))
+    # Пустой — непонятно, от какой компании ответ: поставщика выберет человек
+    supplier_id: Mapped[str | None] = mapped_column(ForeignKey("suppliers.id"))
+    product: Mapped[str | None]
+    price: Mapped[Decimal | None] = mapped_column(Numeric)
+    currency: Mapped[str | None]
+    moq: Mapped[int | None]
+    lead_time_days: Mapped[int | None]
+    regions: Mapped[list[str]] = mapped_column(ARRAY(String))
+    # Сообщения поставщика, которые разбирала модель
+    quote: Mapped[str]
+    # Причины «проверить вручную»: чего не хватает, чтобы применить
+    review: Mapped[list[str]] = mapped_column(ARRAY(String))
+    edited_at: Mapped[datetime | None]
+    applied_at: Mapped[datetime | None]
+    # Последнее сообщение дополнения, пришедшего после правки или применения
+    supplement_at: Mapped[datetime | None]

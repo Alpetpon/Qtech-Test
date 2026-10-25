@@ -1,0 +1,11 @@
+{
+  "source": "manual",
+  "model": "anthropic/claude-sonnet-5.5",
+  "request": [
+    {
+      "role": "user",
+      "content": "Вложения: нет\n<reply>\nПолучили запрос, пришлём прайс до конца недели\nСтаканы бумажные 250 мл — 0.05 EUR/шт, от 20 000 шт, срок 7 дней, доставка по EU\n</reply>"
+    }
+  ],
+  "response": "{\"type\": \"offer\", \"items\": [{\"product\": \"Стаканы бумажные 250 мл\", \"price\": 0.05, \"currency\": \"EUR\", \"moq\": 20000, \"lead_time_days\": 7, \"regions\": [\"EU\"]}], \"notes\": [], \"supplier_hint\": null}"
+}

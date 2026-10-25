@@ -1,0 +1,11 @@
+{
+  "source": "manual",
+  "model": "anthropic/claude-sonnet-5.5",
+  "request": [
+    {
+      "role": "user",
+      "content": "Вложения: нет\n<reply>\nДобрый день! Коробки 40x30x30 — 0.42 EUR/шт, минимальная партия 5000 шт\nСрок поставки 10 дней, доставляем по EU\nОбновление: коробки теперь 0.39 EUR/шт\n</reply>"
+    }
+  ],
+  "response": "{\"type\": \"offer\", \"items\": [{\"product\": \"Коробки 40x30x30\", \"price\": 0.39, \"currency\": \"EUR\", \"moq\": 5000, \"lead_time_days\": 10, \"regions\": [\"EU\"]}], \"notes\": [], \"supplier_hint\": null}"
+}

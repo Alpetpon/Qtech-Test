@@ -26,11 +26,11 @@ class Settings(BaseSettings):
             database=self.postgres_db,
         )
 
-    # LLM: OpenAI-совместимый API, по умолчанию OpenRouter. Без ключа приложение и тесты работают
     llm_api_key: SecretStr | None = None
     llm_model: str = "anthropic/claude-sonnet-5.5"
     llm_base_url: str = "https://openrouter.ai/api/v1"
     prompts_dir: Path = Path("/app/prompts")
+    llm_recordings_dir: Path = Path("/app/tests/fixtures/llm")
 
 
 settings = Settings()

@@ -1,0 +1,11 @@
+{
+  "source": "manual",
+  "model": "anthropic/claude-sonnet-5.5",
+  "request": [
+    {
+      "role": "user",
+      "content": "Вложения: нет\nПоставщики чата: Kestrel Foods, Kestrel Foods EU\n<reply>\nПишу от Kestrel Foods EU: контейнеры пищевые 500 мл — 0.30 EUR/шт, партия от 1000 шт\n</reply>"
+    }
+  ],
+  "response": "{\"type\": \"offer\", \"items\": [{\"product\": \"контейнеры пищевые 500 мл\", \"price\": 0.30, \"currency\": \"EUR\", \"moq\": 1000, \"lead_time_days\": null, \"regions\": []}], \"notes\": [], \"supplier_hint\": \"Kestrel Foods EU\"}"
+}

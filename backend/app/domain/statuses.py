@@ -1,4 +1,4 @@
-"""Статус поставщика в рассылке: отправлено → молчит → ответил.
+"""Статус поставщика в рассылке: отправлено → молчит → ответил → предложение, отказ или другое.
 
 Время отправки, текущее время и ответы приходят параметрами.
 """
@@ -11,6 +11,10 @@ SILENCE = timedelta(hours=72)
 SENT = "sent"
 SILENT = "silent"
 REPLIED = "replied"
+# Ответ разобран моделью: тип последнего разбора
+OFFER = "offer"
+REFUSAL = "refusal"
+OTHER = "other"
 
 
 def supplier_status(sent_at: datetime, now: datetime, replies: Iterable[datetime], silence: timedelta = SILENCE) -> str:

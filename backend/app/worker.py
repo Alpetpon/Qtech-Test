@@ -10,14 +10,18 @@ from app.clock import AppClock, Clock
 from app.config import settings
 from app.db import engine
 from app.domain.replies import Incoming
+from app.llm import LLMClient, LLMError
+from app.llm.client import ApiClient, ReplayClient
 from app.messenger import inbox_replay
 from app.messenger.sender import Sender, StubSender
-from app.services import inbox, statuses
+from app.services import analysis, inbox, statuses
 from app.services.sending import recover, send_next
 
 log = logging.getLogger("app.worker")
 
 TICK_SECONDS = 1
+# Модель недоступна — следующий круг разбора через минуту, а не на каждом тике
+ANALYSIS_RETRY_SECONDS = 60
 
 
 def run(stop: threading.Event) -> None:
@@ -26,7 +30,11 @@ def run(stop: threading.Event) -> None:
     sender = StubSender(lambda attempt: rng.random() < settings.rate_limit_chance)
     # Входящие заглушки мессенджера — из тех же папок, что и справочники
     scenario = inbox_replay.load(settings.data_dir, settings.data_dir / "extra")
+    client = llm_client()
     start(clock, rng)
+    # Модель отвечает секундами: разбор в своём потоке, чтобы отправка и приём её не ждали. Поток-демон:
+    # разбор сохраняется одной транзакцией, и прерванный остановкой ответ разберётся после перезапуска
+    threading.Thread(target=analyze_loop, args=(stop, clock, client), name="analysis", daemon=True).start()
     while not stop.is_set():
         try:
             tick(clock, sender, rng)
@@ -67,6 +75,38 @@ def receive(clock: Clock, scenario: Sequence[Incoming]) -> None:
         changed = statuses.refresh(session, clock)
     if delivered or changed:
         log.info("Пришло входящих: %s, изменилось статусов поставщиков: %s", delivered, changed)
+
+
+def llm_client() -> LLMClient:
+    """Модель по API; без ключа — записанные ответы, чтобы демо на данных задания шло и без него."""
+    try:
+        return ApiClient.from_settings()
+    except LLMError:
+        log.warning(
+            "LLM_API_KEY не задан: ответы разбираются по записанным ответам модели из %s. "
+            "Ответ, для которого записи нет, ждёт разбора — положите ключ в .env",
+            settings.llm_recordings_dir,
+        )
+        return ReplayClient(settings.llm_recordings_dir)
+
+
+def analyze_loop(stop: threading.Event, clock: Clock, client: LLMClient) -> None:
+    while not stop.is_set():
+        try:
+            failed = analyze(clock, client)
+        except Exception:
+            log.exception("Шаг разбора ответов упал, повторим позже")
+            failed = True
+        stop.wait(ANALYSIS_RETRY_SECONDS if failed else TICK_SECONDS)
+
+
+def analyze(clock: Clock, client: LLMClient) -> bool:
+    """Разбирает закрытые ответы; True — модель ответила не на все, повторим позже."""
+    with Session(engine) as session:
+        result = analysis.run(session, clock, client, settings.llm_model)
+    if result.analyzed:
+        log.info("Разобрано ответов моделью: %s", result.analyzed)
+    return result.failed > 0
 
 
 def main() -> None:
