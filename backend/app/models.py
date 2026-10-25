@@ -107,9 +107,15 @@ class OutboxMessage(Base):
 
 
 class SenderState(Base):
-    """Аккаунт, с которого уходит очередь, и когда ему можно отправить следующее сообщение."""
+    """Аккаунт, с которого уходит очередь, и когда ему можно отправить следующее сообщение.
+
+    Пауза: с paused_at до paused_until по причине pause_reason, идёт, пока paused_until позже текущего времени.
+    """
 
     __tablename__ = "sender_state"
 
     account: Mapped[str] = mapped_column(primary_key=True)
     next_send_at: Mapped[datetime | None]
+    paused_at: Mapped[datetime | None]
+    paused_until: Mapped[datetime | None]
+    pause_reason: Mapped[str | None]

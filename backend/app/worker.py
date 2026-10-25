@@ -18,8 +18,8 @@ TICK_SECONDS = 1
 
 def run(stop: threading.Event) -> None:
     clock = AppClock(settings.clock_start)
-    sender = StubSender()
     rng = random.Random()
+    sender = StubSender(lambda attempt: rng.random() < settings.rate_limit_chance)
     while not stop.is_set():
         try:
             tick(clock, sender, rng)

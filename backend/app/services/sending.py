@@ -1,4 +1,7 @@
-"""Отправка очереди с общего аккаунта, по одному сообщению, с паузой 1–3 минуты и не больше 100 за 24 часа."""
+"""Отправка очереди с общего аккаунта, по одному сообщению, с паузой 1–3 минуты и не больше 100 за 24 часа.
+
+На RATE_LIMIT аккаунт встаёт на паузу, а с ним и все рассылки: отправитель один.
+"""
 
 import logging
 import random
@@ -9,7 +12,8 @@ from sqlalchemy.orm import Session
 
 from app import models
 from app.clock import Clock
-from app.messenger.sender import Sender
+from app.config import settings
+from app.messenger.sender import RateLimited, Sender
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +25,7 @@ LOCK = func.hashtext(f"sender {ACCOUNT}")
 
 
 def send_next(session: Session, clock: Clock, sender: Sender, rng: random.Random) -> models.OutboxMessage | None:
-    """Шаг очереди, отправляет следующее сообщение, если уже можно. None значит рано, пусто или отправляет другой.
+    """Шаг очереди, отправляет следующее сообщение, если уже можно. None значит рано, пусто, отправляет другой или RATE_LIMIT.
 
     Транзакциями управляет сам шаг. Сессия весь шаг должна держать одно соединение, на нем
     живет блокировка аккаунта. Если шаг упал, соединение закрывается, так снимается и блокировка.
@@ -53,7 +57,20 @@ def send_locked(session: Session, clock: Clock, sender: Sender, rng: random.Rand
     # Фиксируем до вызова отправителя, если процесс упадет посреди отправки, строка останется sending и в отправку она больше не попадает
     session.commit()
 
-    sender.send(chat_id, text)
+    try:
+        sender.send(chat_id, text)
+    except RateLimited:
+        # RATE_LIMIT — точный ответ «не отправлено», поэтому сообщение можно вернуть в очередь:
+        # со своим id оно уйдёт первым после паузы
+        paused_at = clock.now()
+        paused_until = paused_at + settings.rate_limit_pause
+        message.status = "pending"
+        state = session.get(models.SenderState, ACCOUNT) or models.SenderState(account=ACCOUNT)
+        state.paused_at, state.paused_until, state.pause_reason = paused_at, paused_until, "RATE_LIMIT"
+        session.add(state)
+        session.commit()
+        log.warning("RATE_LIMIT на чате %s: все рассылки на паузе до %s", chat_id, paused_until)
+        return None
 
     sent_at = clock.now()
     message.status, message.sent_at = "sent", sent_at
@@ -76,11 +93,13 @@ def send_locked(session: Session, clock: Clock, sender: Sender, rng: random.Rand
 
 
 def ready_at(session: Session, now: datetime) -> datetime:
-    """Когда аккаунту можно отправить следующее сообщение: не раньше now, конца паузы и места в лимите."""
+    """Когда аккаунту можно отправить следующее сообщение: не раньше now, конца пауз и места в лимите."""
     moments = [now]
     state = session.get(models.SenderState, ACCOUNT)
     if state is not None and state.next_send_at is not None:
         moments.append(state.next_send_at)
+    if state is not None and state.paused_until is not None:
+        moments.append(state.paused_until)
     # Окно скользящее, место освобождается, когда сотое с конца сообщение старше 24 часов
     hundredth = session.scalar(
         select(models.OutboxMessage.sent_at)
@@ -92,3 +111,25 @@ def ready_at(session: Session, now: datetime) -> datetime:
     if hundredth is not None:
         moments.append(hundredth + LIMIT_WINDOW)
     return max(moments)
+
+
+def current_pause(session: Session, now: datetime) -> models.SenderState | None:
+    """Идущая пауза аккаунта: причина в pause_reason, сроки в paused_at и paused_until. None — паузы нет."""
+    state = session.get(models.SenderState, ACCOUNT)
+    if state is None or state.paused_until is None or state.paused_until <= now:
+        return None
+    return state
+
+
+def resume(session: Session) -> None:
+    """Ручное «Продолжить»: пауза снимается сразу, не дожидаясь срока. Транзакция — вызывающего."""
+    state = session.get(models.SenderState, ACCOUNT)
+    if state is not None:
+        state.paused_at = state.paused_until = state.pause_reason = None
+
+
+def campaign_status(session: Session, now: datetime, campaign: models.Campaign) -> str:
+    """Статус рассылки для показа: неотправленная стоит, пока аккаунт на паузе."""
+    if campaign.status == "sending" and current_pause(session, now) is not None:
+        return "paused"
+    return campaign.status
