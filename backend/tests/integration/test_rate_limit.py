@@ -104,7 +104,7 @@ def test_resume_lifts_pause_at_once(session, clock, rng):
     clock.advance(timedelta(minutes=1))
     assert send_next(session, clock, sender, rng) is None
 
-    resume(session)
+    resume(session, clock.now())
     session.commit()
 
     assert current_pause(session, clock.now()) is None

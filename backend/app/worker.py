@@ -3,6 +3,7 @@ import random
 import signal
 import threading
 from collections.abc import Sequence
+from datetime import datetime
 
 from sqlalchemy.orm import Session
 
@@ -20,6 +21,9 @@ from app.services.sending import recover, send_next
 log = logging.getLogger("app.worker")
 
 TICK_SECONDS = 1
+# Догон перемотанного времени — пачками: шаг не задерживает остановку воркера и приём входящих
+# дольше нескольких отправок, а на странице рассылки видно, как растёт «Отправлено»
+SEND_BATCH = 10
 # Модель недоступна — следующий круг разбора через минуту, а не на каждом тике
 ANALYSIS_RETRY_SECONDS = 60
 
@@ -32,13 +36,15 @@ def run(stop: threading.Event) -> None:
     scenario = inbox_replay.load(settings.data_dir, settings.data_dir / "extra")
     client = llm_client()
     start(clock, rng)
-    log.info("Сейчас по часам задания: %s", clock.now().isoformat())
+    # Время, пока воркер был выключен, очередь не догоняет: тогда сообщения на самом деле не уходили
+    since = clock.now()
+    log.info("Сейчас по часам задания: %s", since.isoformat())
     # Модель отвечает секундами: разбор в своём потоке, чтобы отправка и приём её не ждали. Поток-демон:
     # разбор сохраняется одной транзакцией, и прерванный остановкой ответ разберётся после перезапуска
     threading.Thread(target=analyze_loop, args=(stop, clock, client), name="analysis", daemon=True).start()
     while not stop.is_set():
         try:
-            tick(clock, sender, rng)
+            tick(clock, sender, rng, since)
         except Exception:
             log.exception("Шаг отправки упал, повторим на следующем тике")
         try:
@@ -54,14 +60,17 @@ def start(clock: Clock, rng: random.Random) -> None:
         recover(session, clock, rng)
 
 
-def tick(clock: Clock, sender: Sender, rng: random.Random) -> None:
-    """Весь шаг идет через одно соединение с базой. Блокировка аккаунта привязана к соединению,
-    а в шаге несколько транзакций, если бы после каждой сессия брала из пула другое
-    соединение, снимать блокировку в конце шага было бы не с чего"""
+def tick(clock: Clock, sender: Sender, rng: random.Random, since: datetime | None = None) -> None:
+    """Отправляет всё, что уже можно, но не больше SEND_BATCH. since — как в send_next."""
+    # Весь шаг идет через одно соединение с базой. Блокировка аккаунта привязана к соединению,
+    # а в шаге несколько транзакций, если бы после каждой сессия брала из пула другое
+    # соединение, снимать блокировку в конце шага было бы не с чего
     with engine.connect() as connection:
         try:
             with Session(connection) as session:
-                send_next(session, clock, sender, rng)
+                for _ in range(SEND_BATCH):
+                    if send_next(session, clock, sender, rng, since) is None:
+                        break
         except Exception:
             # Иначе соединение вернется в пул вместе с блокировкой, если шаг не успел ее снять
             connection.invalidate()

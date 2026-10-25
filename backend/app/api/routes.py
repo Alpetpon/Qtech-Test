@@ -93,7 +93,7 @@ def not_found(campaign_id: int) -> HTTPException:
 @router.post("/sender/resume", tags=["рассылки"])
 def resume(session: SessionDep, clock: ClockDep) -> schemas.Sender:
     """«Продолжить» после RATE_LIMIT: пауза снимается сразу, очередь идёт со следующего шага воркера."""
-    sending.resume(session)
+    sending.resume(session, clock.now())
     session.commit()
     return schemas.Sender.model_validate(report.sender(session, clock.now()))
 

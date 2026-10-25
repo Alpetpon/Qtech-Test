@@ -24,8 +24,13 @@ PAUSE_SECONDS = (60, 180)
 LOCK = func.hashtext(f"sender {ACCOUNT}")
 
 
-def send_next(session: Session, clock: Clock, sender: Sender, rng: random.Random) -> models.OutboxMessage | None:
+def send_next(
+    session: Session, clock: Clock, sender: Sender, rng: random.Random, since: datetime | None = None
+) -> models.OutboxMessage | None:
     """Шаг очереди, отправляет следующее сообщение, если уже можно. None значит рано, пусто, отправляет другой или RATE_LIMIT.
+
+    since — с какого момента воркер следит за очередью. Время от него до текущего момента, которое перемотали,
+    очередь догоняет: сообщение уходит в момент по часам, когда его можно было отправить. None — без догона.
 
     Транзакциями управляет сам шаг. Сессия весь шаг должна держать одно соединение, на нем
     живет блокировка аккаунта. Если шаг упал, соединение закрывается, так снимается и блокировка.
@@ -34,15 +39,15 @@ def send_next(session: Session, clock: Clock, sender: Sender, rng: random.Random
     # еще до вызова отправителя, и второй воркер отправил бы свое сообщение без паузы
     if not session.scalar(select(func.pg_try_advisory_lock(LOCK))):
         return None
-    message = send_locked(session, clock, sender, rng)
+    message = send_locked(session, clock, sender, rng, since)
     session.scalar(select(func.pg_advisory_unlock(LOCK)))
     return message
 
 
-def send_locked(session: Session, clock: Clock, sender: Sender, rng: random.Random) -> models.OutboxMessage | None:
+def send_locked(
+    session: Session, clock: Clock, sender: Sender, rng: random.Random, since: datetime | None = None
+) -> models.OutboxMessage | None:
     now = clock.now()
-    if ready_at(session, now) > now:
-        return None
     message = session.scalars(
         select(models.OutboxMessage)
         .where(models.OutboxMessage.status == "pending")
@@ -51,6 +56,13 @@ def send_locked(session: Session, clock: Clock, sender: Sender, rng: random.Rand
         .with_for_update(skip_locked=True)
     ).first()
     if message is None:
+        return None
+    # После «+1 день» очередь идёт так, будто сутки прошли на самом деле: паузы 1–3 минуты и лимит
+    # по часам. Иначе уходило бы одно сообщение, а остальные ждали бы настоящие минуты.
+    # Раньше старта воркера и создания рассылки не догоняем: тогда сообщения на самом деле не уходили
+    earliest = now if since is None else max(since, session.get(models.Campaign, message.campaign_id).created_at)
+    at = ready_at(session, earliest)
+    if at > now:
         return None
     message.status = "sending"
     campaign_id, chat_id, text = message.campaign_id, message.chat_id, message.text
@@ -62,7 +74,7 @@ def send_locked(session: Session, clock: Clock, sender: Sender, rng: random.Rand
     except RateLimited:
         # RATE_LIMIT — точный ответ «не отправлено», поэтому сообщение можно вернуть в очередь:
         # со своим id оно уйдёт первым после паузы
-        paused_at = clock.now()
+        paused_at = at
         paused_until = paused_at + settings.rate_limit_pause
         message.status = "pending"
         state = session.get(models.SenderState, ACCOUNT) or models.SenderState(account=ACCOUNT)
@@ -72,7 +84,7 @@ def send_locked(session: Session, clock: Clock, sender: Sender, rng: random.Rand
         log.warning("RATE_LIMIT на чате %s: все рассылки на паузе до %s", chat_id, paused_until)
         return None
 
-    sent_at = clock.now()
+    sent_at = at
     session.get(models.Chat, chat_id).last_outbound_at = sent_at
     next_send_at = settle(session, message, "sent", sent_at, rng)
     session.commit()
@@ -166,11 +178,13 @@ def current_pause(session: Session, now: datetime) -> models.SenderState | None:
     return state
 
 
-def resume(session: Session) -> None:
-    """Ручное «Продолжить»: пауза снимается сразу, не дожидаясь срока. Транзакция — вызывающего."""
-    state = session.get(models.SenderState, ACCOUNT)
+def resume(session: Session, now: datetime) -> None:
+    """Ручное «Продолжить»: пауза кончается сейчас, не дожидаясь срока. Транзакция — вызывающего."""
+    state = current_pause(session, now)
+    # Не стираем паузу, а заканчиваем: догон перемотанного времени отправил бы следующее сообщение
+    # задним числом, посреди паузы
     if state is not None:
-        state.paused_at = state.paused_until = state.pause_reason = None
+        state.paused_until = now
 
 
 def campaign_status(session: Session, now: datetime, campaign: models.Campaign) -> str:

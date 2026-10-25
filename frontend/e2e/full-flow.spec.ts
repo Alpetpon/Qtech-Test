@@ -10,6 +10,17 @@ function nordpack(page: Page) {
 }
 
 test("рассылка от запуска до «Применить» на перемотанных часах", async ({ page, context }) => {
+  await test.step("«Новые без движения»: сообщение в Kestrel Group уходит сразу", async () => {
+    await page.goto("/");
+    await page.getByLabel("Новые без движения").check();
+    await page.getByRole("button", { name: "Показать превью" }).click();
+    await expect(page.getByText("Чат «Kestrel Group»")).toBeVisible();
+
+    await page.getByRole("button", { name: "Запустить" }).click();
+    await expect(page).toHaveURL(/\/campaigns\/\d+$/);
+    await expect(page.getByText("Статус: отправка завершена")).toBeVisible();
+  });
+
   await test.step("превью «Активные, прайс устарел» и запуск", async () => {
     await page.goto("/");
     await page.getByLabel("Активные, прайс устарел").check();
@@ -25,11 +36,14 @@ test("рассылка от запуска до «Применить» на пе
     await expect(page).toHaveURL(/\/campaigns\/\d+$/);
   });
 
-  await test.step("очередь отправила сообщение, через день — предложение NordPack", async () => {
+  await test.step("сообщение NordPack ждёт паузу 1–3 минуты, «+1 день» — ушло, и ответ уже пришёл", async () => {
+    await expect(page.getByText("Статус: идёт отправка")).toBeVisible();
     await expect(page.getByText("Отправлено за последние сутки: 1 из 100")).toBeVisible();
-    await expect(page.getByText("Статус: отправка завершена")).toBeVisible();
 
     await page.getByRole("button", { name: "+1 день" }).click();
+    await expect(page.getByText("Статус: отправка завершена")).toBeVisible();
+    // Очередь догоняет промотанные сутки: сообщение ушло через 1–3 минуты по часам после Kestrel Group,
+    // а не в момент перемотки, поэтому ответ NordPack через 2 часа уже разобран
     await expect(page.getByRole("row").filter({ hasText: "NordPack" })).toContainText("предложение");
   });
 
