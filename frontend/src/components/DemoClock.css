@@ -1,0 +1,36 @@
+.demo-clock {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #8884;
+  border-radius: 0.5rem;
+}
+
+.demo-clock h2,
+.demo-clock p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.demo-clock-now {
+  font-variant-numeric: tabular-nums;
+}
+
+.demo-clock-steps {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* 44px — чтобы палец попадал по кнопке на телефоне */
+.demo-clock-steps button {
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  font: inherit;
+}
+
+.demo-clock-error {
+  flex-basis: 100%;
+  color: hsl(0 70% 50%);
+}
