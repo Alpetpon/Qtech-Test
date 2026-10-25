@@ -1,0 +1,11 @@
+{
+  "source": "api",
+  "model": "anthropic/claude-sonnet-5.5",
+  "request": [
+    {
+      "role": "user",
+      "content": "Вложения: нет\n<reply>\nИнструмент: от 0.40 до 0.45 EUR/шт в зависимости от объёма, партия от 2000\n</reply>"
+    }
+  ],
+  "response": "{\"type\": \"offer\", \"items\": [{\"product\": \"Инструмент\", \"price\": 0.4, \"currency\": \"EUR\", \"moq\": 2000, \"lead_time_days\": null, \"regions\": []}], \"notes\": [\"цена диапазоном: 0.40–0.45 EUR, зависит от объёма\"], \"supplier_hint\": null}"
+}

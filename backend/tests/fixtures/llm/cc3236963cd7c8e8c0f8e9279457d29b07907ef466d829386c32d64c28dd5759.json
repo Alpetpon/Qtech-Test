@@ -1,0 +1,11 @@
+{
+  "source": "api",
+  "model": "anthropic/claude-sonnet-5.5",
+  "request": [
+    {
+      "role": "user",
+      "content": "Вложения: нет\n<reply>\nLabels 100x150: $0.012/pc, MOQ 50k, lead time 2 weeks, worldwide shipping\n</reply>"
+    }
+  ],
+  "response": "{\"type\":\"offer\",\"items\":[{\"product\":\"Labels 100x150\",\"price\":0.012,\"currency\":\"USD\",\"moq\":50000,\"lead_time_days\":14,\"regions\":[\"весь мир\"]}],\"notes\":[],\"supplier_hint\":null}"
+}

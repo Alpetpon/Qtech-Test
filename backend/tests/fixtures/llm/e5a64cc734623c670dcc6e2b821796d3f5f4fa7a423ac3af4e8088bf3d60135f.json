@@ -1,5 +1,5 @@
 {
-  "source": "manual",
+  "source": "api",
   "model": "anthropic/claude-sonnet-5.5",
   "request": [
     {
@@ -7,5 +7,5 @@
       "content": "Вложения: нет\n<reply>\nГофрокороб 60x40x40 — 0,71 € за шт. при партии от 1 000 шт., срок 3–4 недели, доставка Польша, Германия\n</reply>"
     }
   ],
-  "response": "{\"type\": \"offer\", \"items\": [{\"product\": \"Гофрокороб 60x40x40\", \"price\": 0.71, \"currency\": \"EUR\", \"moq\": 1000, \"lead_time_days\": 28, \"regions\": [\"Польша\", \"Германия\"]}], \"notes\": [\"срок 3–4 недели\"], \"supplier_hint\": null}"
+  "response": "{\"type\":\"offer\",\"items\":[{\"product\":\"Гофрокороб 60x40x40\",\"price\":0.71,\"currency\":\"EUR\",\"moq\":1000,\"lead_time_days\":28,\"regions\":[\"Польша\",\"Германия\"]}],\"notes\":[\"срок 3–4 недели\"],\"supplier_hint\":null}"
 }

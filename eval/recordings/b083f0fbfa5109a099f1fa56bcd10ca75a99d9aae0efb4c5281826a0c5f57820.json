@@ -7,5 +7,5 @@
       "content": "Вложения: нет\n<reply>\nЗдраствуйте! Коробки 60х40х40 по 0.55 евро за шт., миниальная партя 2000шт, срок поставки 14 днй, доставка по ЕС\n</reply>"
     }
   ],
-  "response": "{\"type\":\"offer\",\"items\":[{\"product\":\"Коробки 60х40х40\",\"price\":0.55,\"currency\":\"EUR\",\"moq\":2000,\"lead_time_days\":14,\"regions\":[\"ЕС\"]}],\"notes\":[],\"supplier_hint\":null}"
+  "response": "{\"type\": \"offer\", \"items\": [{\"product\": \"Коробки 60х40х40\", \"price\": 0.55, \"currency\": \"EUR\", \"moq\": 2000, \"lead_time_days\": 14, \"regions\": [\"ЕС\"]}], \"notes\": [], \"supplier_hint\": null}"
 }

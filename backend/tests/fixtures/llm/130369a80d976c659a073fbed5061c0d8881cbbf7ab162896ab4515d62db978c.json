@@ -1,5 +1,5 @@
 {
-  "source": "manual",
+  "source": "api",
   "model": "anthropic/claude-sonnet-5.5",
   "request": [
     {

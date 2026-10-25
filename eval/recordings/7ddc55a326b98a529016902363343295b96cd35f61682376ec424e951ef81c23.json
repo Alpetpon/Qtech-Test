@@ -1,0 +1,11 @@
+{
+  "source": "api",
+  "model": "anthropic/claude-sonnet-5.5",
+  "request": [
+    {
+      "role": "user",
+      "content": "Вложения: price_2026.pdf\n<reply>\nУпаковку больше не делаем, но можем предложить пищевые контейнеры, прайс во вложении\n</reply>"
+    }
+  ],
+  "response": "{\"type\":\"offer\",\"items\":[{\"product\":\"пищевые контейнеры\",\"price\":null,\"currency\":null,\"moq\":null,\"lead_time_days\":null,\"regions\":[]}],\"notes\":[\"цена во вложении: price_2026.pdf\",\"прежний товар больше не производят\"],\"supplier_hint\":null}"
+}

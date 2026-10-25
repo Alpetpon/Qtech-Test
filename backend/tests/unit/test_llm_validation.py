@@ -112,7 +112,7 @@ def test_price_formats(name, price, currency, moq, lead_time_days, regions):
 
 
 def test_price_range_takes_lower_bound_with_note():
-    assert "цена зависит от объёма: 0.40–0.45 EUR" in recorded("delta").notes
+    assert "цена диапазоном: 0.40–0.45 EUR, зависит от объёма" in recorded("delta").notes
 
 
 @pytest.mark.parametrize("name", ["atlas", "kestrel_office"])

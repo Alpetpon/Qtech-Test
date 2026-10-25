@@ -7,5 +7,5 @@
       "content": "Вложения: нет\n<reply>\nПлёнку ПВД 150 мкм больше не выпускаем. Можем предложить 120 мкм — 2,15 USD/кг, от 500 кг, отгрузка через 3 недели\n</reply>"
     }
   ],
-  "response": "{\"type\": \"offer\", \"items\": [{\"product\": \"Плёнка ПВД 120 мкм\", \"price\": 2.15, \"currency\": \"USD\", \"moq\": 500, \"lead_time_days\": 21, \"regions\": []}], \"notes\": [\"прежний товар больше не производят\"], \"supplier_hint\": null}"
+  "response": "{\"type\":\"offer\",\"items\":[{\"product\":\"Плёнка ПВД 120 мкм\",\"price\":2.15,\"currency\":\"USD\",\"moq\":500,\"lead_time_days\":21,\"regions\":[]}],\"notes\":[\"прежний товар больше не производят\"],\"supplier_hint\":null}"
 }
