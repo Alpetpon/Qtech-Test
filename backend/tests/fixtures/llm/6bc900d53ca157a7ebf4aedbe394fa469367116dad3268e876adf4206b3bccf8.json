@@ -1,0 +1,11 @@
+{
+  "source": "manual",
+  "model": "anthropic/claude-sonnet-5.5",
+  "request": [
+    {
+      "role": "user",
+      "content": "Вложения: нет\n<reply>\nПо EU сейчас ничего не можем, спасибо\n</reply>"
+    }
+  ],
+  "response": "{\"type\": \"refusal\", \"items\": [], \"notes\": [], \"supplier_hint\": null}"
+}

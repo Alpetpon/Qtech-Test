@@ -1,7 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from pydantic import AwareDatetime, Field
+from pydantic import AwareDatetime, Field, SecretStr
 from pydantic_settings import BaseSettings
 from sqlalchemy import URL
 
@@ -25,6 +25,12 @@ class Settings(BaseSettings):
             host=self.postgres_host,
             database=self.postgres_db,
         )
+
+    # LLM: OpenAI-совместимый API, по умолчанию OpenRouter. Без ключа приложение и тесты работают
+    llm_api_key: SecretStr | None = None
+    llm_model: str = "anthropic/claude-sonnet-5.5"
+    llm_base_url: str = "https://openrouter.ai/api/v1"
+    prompts_dir: Path = Path("/app/prompts")
 
 
 settings = Settings()

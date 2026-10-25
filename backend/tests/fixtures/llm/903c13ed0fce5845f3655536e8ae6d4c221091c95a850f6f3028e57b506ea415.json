@@ -1,0 +1,11 @@
+{
+  "source": "manual",
+  "model": "anthropic/claude-sonnet-5.5",
+  "request": [
+    {
+      "role": "user",
+      "content": "Вложения: нет\n<reply>\nЛист оцинкованный 1 мм — 1 250,50 руб./лист, от 200 листов, отгрузка 5 рабочих дней, Москва и МО\n</reply>"
+    }
+  ],
+  "response": "{\"type\": \"offer\", \"items\": [{\"product\": \"Лист оцинкованный 1 мм\", \"price\": 1250.5, \"currency\": \"RUB\", \"moq\": 200, \"lead_time_days\": 5, \"regions\": [\"Москва\", \"МО\"]}], \"notes\": [\"срок в рабочих днях\"], \"supplier_hint\": null}"
+}

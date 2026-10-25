@@ -12,8 +12,10 @@ FROM base AS runtime
 RUN uv sync --locked --no-dev
 COPY backend/ ./
 COPY data/ ./data/
+COPY prompts/ ./prompts/
 
 FROM base AS test
 RUN uv sync --locked
 COPY backend/ ./
 COPY data/ ./data/
+COPY prompts/ ./prompts/
