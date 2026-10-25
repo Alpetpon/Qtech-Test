@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "e2e": "playwright test -c e2e/playwright.config.ts",
     "gen:api": "uv run --directory ../backend python -m scripts.export_openapi ../frontend/openapi.json && openapi-typescript openapi.json -o src/api/schema.d.ts"
   },
   "dependencies": {
@@ -14,6 +15,7 @@
     "react-router": "^8.5.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",

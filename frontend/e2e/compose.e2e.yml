@@ -1,0 +1,22 @@
+x-e2e: &e2e
+  environment:
+    LLM_API_KEY: ""
+    LLM_MODEL: anthropic/claude-sonnet-5.5
+    RATE_LIMIT_CHANCE: "0"
+  tmpfs:
+    - /app/data/extra
+
+services:
+  db:
+    volumes: !reset []
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  migrate: *e2e
+
+  worker: *e2e
+
+  app:
+    <<: *e2e
+    ports: !override
+      - "${E2E_PORT:-8023}:8000"

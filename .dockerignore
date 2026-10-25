@@ -4,3 +4,4 @@
 **/node_modules
 **/__pycache__
 frontend/dist
+frontend/e2e/test-results
